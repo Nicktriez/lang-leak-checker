@@ -30,31 +30,37 @@ export async function loadHtml(input: string): Promise<string> {
 ## Read this — the concepts
 
 ### `async` / `await` / `Promise`
-- A `Promise<string>` is a **"string that will arrive later."** It's how JS represents work that hasn't finished yet (a network request, a file read).
-- `async function` = a function that returns a Promise. The return type is `Promise<string>`, not `string`.
-- `await` = "pause here until this Promise resolves." Code after `await` runs once the value arrives.
-- **You can only `await` inside an `async` function.** That's a rule you'll hit constantly — "await is only valid in async function."
 
-> Rails devs: this is like `Async`/`GoodJob`/sidekiq jobs — work that completes later. But in JS it's the *default* for any I/O, not opt-in.
+This is the single hardest concept in the whole course, so slow down here.
 
-### Union types — the fork in the road
-Look at the branch: `http://` → fetch, otherwise → read file. Both return a `string`, so the function's return type is just `Promise<string>`. That's clean.
+Think about a network request: you ask a website for its HTML, and the answer takes time to arrive. In Ruby, this is like an `Async` block or a background job — work that completes *later*. In JavaScript, *any* work that takes time (network, reading a file) is modeled the same way, and it's the default style, not a special case.
 
-But now add a third type to the *inputs* concept — the union. Unions are written with `|`:
+- **A `Promise<string>` is a "string that will arrive later."** It's a *receipt* for a value that doesn't exist yet. The moment you make the request, you get a Promise immediately — but the actual string inside it isn't there until the network answers.
+- **`async function`** = a function that *returns a Promise*. Because the function's body does slow work (fetch, file read), TS knows it can't return the value instantly — so its return type is `Promise<string>`, not `string`.
+- **`await`** = "pause here until this Promise resolves, then give me the actual value." Code after `await` runs only once the value has arrived.
+- **You can only use `await` inside an `async` function.** This is the rule you'll trip over constantly — the error "await is only valid in async function" means you used `await` somewhere that isn't `async`.
+
+> **Ruby mental model:** `Promise<string>` ≈ a future/job that will hold a string. `await` ≈ blocking until the job completes and grabbing its result. The difference from Ruby: in JS this is everywhere, not opt-in.
+
+### Union types — "this value could be a few different things"
+Look at the branch in `loadHtml`: if the input starts with `http://` → fetch a URL; otherwise → read a file. Both paths return a `string`, so the return type is just `Promise<string>` — clean.
+
+But sometimes a value can be *one of several types*. That's a **union type**, written with `|`:
 
 ```ts
 type InputSource = { kind: "url"; url: string } | { kind: "file"; path: string };
 ```
 
-This is a **discriminated union** — an object that's one of several shapes, distinguished by a `kind` field. It's TS's replacement for Ruby's duck-typing / case-when on type. You narrow it with a check:
+This says "an `InputSource` is either a URL-shaped object or a file-shaped object." The `kind` field tells them apart — that's why it's called a **discriminated union** (the `kind` discriminates which one you have). You check it to narrow down:
 
 ```ts
 if (source.kind === "url") {
+  // TS now KNOWS source has a .url, because kind === "url"
   return await fetch(source.url).then(r => r.text());
 }
 ```
 
-**Don't over-engineer this now** — the simple `if (input.startsWith("http://"))` version is fine for v1. Just know unions exist and are how TS models "this value could be a few different things."
+**Don't over-engineer this now** — the simple `if (input.startsWith("http://"))` version in the task is fine for v1. Just know unions exist: they're TS's way of modeling "this could be a few different shapes," the way Ruby uses duck-typing and `case`/`when` on a type check.
 
 ## Step 2 — Wire it into `cli.ts`
 

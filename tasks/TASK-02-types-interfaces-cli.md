@@ -60,9 +60,22 @@ console.log("inputs:", options.inputs);
 
 1. **`interface CliOptions { ... }`** — declares a contract: an object with these exact fields and types. This is TS's "schema." `getOptions()` *must* return something that matches it, or the compiler errors. This is your first taste of why TS beats plain JS: the shape is enforced.
 
+   Think of it like a Rails **form object / strong-parameters** definition: you declare "the data has these fields, with these types," and the system refuses anything that doesn't fit. In Ruby, a hash can hold anything; in TS, an object's *shape* is part of its type.
+
 2. **`function getOptions(): CliOptions`** — the `: CliOptions` after the parens is the **return type**. You're telling the compiler "this function returns a `CliOptions`," and it verifies you're telling the truth. If you forgot to return `inputs`, TS would catch it.
 
+   > The `: Type` after a function's `()` is the return type. The `: Type` inside the parens (like `name: string`) is a *parameter* type. Both are TS's way of saying "this value must be this kind of thing."
+
 3. **`opts.language` is typed as `any`** — `commander`'s `opts()` returns a loosely-typed object, so TS can't know what's inside. That's why we funnel it through `getOptions()`: it converts the "any" commander world into our strict `CliOptions` schema at the boundary. **This is a pattern you'll use constantly** — strict types inside your code, loose types shimmed at the edges where third-party libs hand you `any`.
+
+   > **What is `any`?** `any` is TS's escape hatch — "this value can be anything, don't check it." It's the *opposite* of types. You should never write `any` yourself, but third-party libraries occasionally hand it to you. `getOptions()` is how we take that loose `any` and turn it into something strict and safe.
+
+### `const` vs `let` — two ways to make a variable
+You'll see both. 
+- `const x = 5` — "constant" — **cannot be reassigned**. Use this by default. Most of your variables are `const`.
+- `let x = 5` — "can change" — the value *can* be reassigned. Only use when you genuinely need to change it (like the `total` counter in Task 7).
+
+If you write `const x = 5; x = 6;` the compiler errors "Cannot assign to 'x' because it is a constant." That's intentional — `const` protects you from accidental reassignment. Default to `const`, switch to `let` only when you have to.
 
 ## Step 2 — Run it
 

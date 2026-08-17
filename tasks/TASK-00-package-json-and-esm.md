@@ -2,6 +2,8 @@
 
 > **Rails analogy:** `package.json` is your `Gemfile` + `Gemfile.lock` + `.ruby-version` + the app's runtime config, all in one file. `node_modules/` is your `vendor/bundle`. npm is your Bundler.
 
+> **New to terminals / npm / Node?** Read the "Before you start" section of `tasks/README.md` first. It covers what a terminal is, what Node and npm do, and the common errors you'll hit. You don't need to be a terminal expert — just comfortable copying commands.
+
 ## What you'll learn
 - What `package.json` is and every field in it
 - ESM (`import`/`export`) vs CommonJS (`require`) — the one concept that bites Rails devs hardest
@@ -16,6 +18,8 @@
 git clone git@github.com:Nicktriez/lang-leak-checker.git
 cd lang-leak-checker
 ```
+
+(`git clone` copies the repo from GitHub to your machine into a folder called `lang-leak-checker`. `cd` moves you into it. Remember `pwd` shows where you are — run it if you ever feel lost.)
 
 **Step 2 — Run `npm init` interactively.** You've been doing this. Answer:
 - package name: `lang-leak-checker`
