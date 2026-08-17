@@ -1,0 +1,20 @@
+{
+  "name": "lang-leak-checker",
+  "version": "1.0.0",
+  "description": " TypeScript terminal tool that scans HTML and flags every inner HTML element that is not in the user's chosen language — catching untranslated/English \"language leakages\" on a site in one pass. It is element-level, not word-level: slang, loanwords, and brand names inside an otherwise-Danish element pass by design (Nick's explicit requirement). Only an element that confidently reads as the wrong language is flagged.",
+  "homepage": "https://github.com/Nicktriez/lang-leak-checker#readme",
+  "bugs": {
+    "url": "https://github.com/Nicktriez/lang-leak-checker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nicktriez/lang-leak-checker.git"
+  },
+  "license": "ISC",
+  "author": "NickTriez",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm pkg set scripts.test=\"node --test --import tsx test/\""
+  }
+}
