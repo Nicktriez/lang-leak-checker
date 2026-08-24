@@ -2,7 +2,7 @@
 import { Command } from "commander";
 import { loadHtml } from "./fetch.js";
 import { scanPage } from "./scan.js";
-import { detectLeaks } from "./detect.js";
+import { detectLeaks, learnAdoptedWords, targetLanguageName } from "./detect.js";
 import { printTty, printJson, type PageReport } from "./report.js";
 
 interface CliOptions {
@@ -41,16 +41,32 @@ function getOptions(): CliOptions {
 
 async function main() {
   const options = getOptions();
-  const results: PageReport[] = [];
 
+  // Load + scan every page first so loanword learning sees the whole site
+  // and the allowlist is consistent across pages.
+  const pages: { source: string; nodes: import("./scan.js").TextNode[] }[] = [];
   for (const input of options.inputs) {
     const html = await loadHtml(input);
     const nodes = scanPage(html, {
       includeHidden: options.includeHidden,
       includeMeta: options.includeMeta,
     });
-    const leaks = detectLeaks(nodes, options.language, { minLength: options.minLength });
-    results.push({ source: input, leaks });
+    pages.push({ source: input, nodes });
+  }
+
+  const allNodes = pages.flatMap((p) => p.nodes);
+  const allowlist = learnAdoptedWords(
+    allNodes,
+    targetLanguageName(options.language),
+    options.minLength
+  );
+
+  const results: PageReport[] = [];
+  for (const page of pages) {
+    const leaks = detectLeaks(page.nodes, options.language, {
+      minLength: options.minLength,
+    }, allowlist);
+    results.push({ source: page.source, leaks });
   }
 
   if (options.json) {

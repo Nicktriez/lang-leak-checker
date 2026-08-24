@@ -25,13 +25,40 @@ it("does NOT flag Danish text with an English loanword", () => {
   assert.equal(leaks.length, 0);
 });
 
-it("does NOT flag an element that reads English only because of a loanword (Upload kvittering)", () => {
+it("does NOT flag an element that reads English only because of a loanword (Upload kvittering, learned, not seeded)", () => {
   const leaks = detectLeaks(
     [{ elementPath: "a.nav", text: "Upload kvittering" }],
     "da",
     { minLength: 3 }
   );
   assert.equal(leaks.length, 0);
+});
+
+it("learns a loanword from the scan, then still flags the real English on the same page", () => {
+  const leaks = detectLeaks(
+    [
+      { elementPath: "a.nav", text: "Upload kvittering" },
+      { elementPath: "p", text: "Your order has been submitted successfully and is being processed." },
+    ],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 1);
+  assert.equal(leaks[0].elementPath, "p");
+  assert.equal(leaks[0].detected, "eng");
+});
+
+it("does NOT auto-adopt a lone English heading like Leaderboard", () => {
+  const leaks = detectLeaks(
+    [
+      { elementPath: "a.nav", text: "Upload kvittering" },
+      { elementPath: "h1", text: "Leaderboard" },
+    ],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 1);
+  assert.equal(leaks[0].elementPath, "h1");
 });
 
 it("still flags a wholly-English element that merely contains a loanword", () => {

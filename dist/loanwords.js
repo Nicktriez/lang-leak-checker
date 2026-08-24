@@ -1,19 +1,30 @@
 /**
- * Loanwords and brand names that are accepted in the site's UI.
+ * Loanword/brand handling for lang-leak-checker.
  *
- * Rule (applied in detect.ts): an element that reads as a foreign language
- * ONLY because of these words is NOT a leak — the rest of the element must
- * read as the target language (or be ambiguous) for it to pass. A remainder
- * that confidently reads as a foreign language is still flagged.
+ * Deciding which English-looking words are "accepted vocabulary" is done in
+ * TWO layers:
+ *
+ * 1. SEED (`LOANWORDS`) — a small, stable bootstrap list for words that can't
+ *    be learned reliably (brand/proper nouns that appear as lone elements).
+ *    You should rarely need to touch this.
+ *
+ * 2. LEARNING (see detect.ts `learnAdoptedWords`) — during every scan, the
+ *    detector watches foreign-reading elements and auto-adopts any word whose
+ *    remainder reads Danish/ambiguous. New anglicisms are picked up from the
+ *    site itself — no manual list maintenance.
+ *
+ * The strip-and-recheck rule is self-limiting: a word can only rescue an
+ * element if everything LEFT OVER reads as the target language (its best
+ * language is Danish). A genuinely English sentence — even one whose
+ * best-language margin drops to ~0.6 under low-accuracy mode — is still
+ * foreign and stays flagged. So auto-adopting a word can never hide a real
+ * leak.
  */
+// Bootstrap only. Dynamic adoption happens per-scan in detect.ts.
 export const LOANWORDS = new Set([
-    // anglicisms common in Danish web UIs
-    "upload",
-    "uploads",
-    "uploaded",
-    "uploading",
+    // proper-noun community term used on the site
     "community",
-    // supermarket / coffee brands shown on the site
+    // supermarket / coffee brands shown as lone elements
     "netto",
     "rema",
     "rema1000",
@@ -22,13 +33,21 @@ export const LOANWORDS = new Set([
     "coca",
     "cola",
 ]);
+/** Unique alphabetic tokens of `text`, lowercased (handles æøå). */
+export function alphaTokens(text) {
+    return Array.from(new Set(text.toLowerCase().match(/[a-zæøå]+/g) ?? []));
+}
 /**
- * Removes every allowlisted loanword/brand token from `text`, keeping all
- * other words, whitespace and punctuation intact.
+ * Removes every token in `set` from `text`, keeping all other words,
+ * whitespace and punctuation intact.
  */
-export function stripLoanwords(text) {
+export function stripTokens(text, set) {
     return text
         .split(/(\b)/)
-        .map((part) => (LOANWORDS.has(part.toLowerCase()) ? "" : part))
+        .map((part) => (set.has(part.toLowerCase()) ? "" : part))
         .join("");
+}
+/** Strips only the seed list (used as a convenience / in tests). */
+export function stripLoanwords(text) {
+    return stripTokens(text, LOANWORDS);
 }
