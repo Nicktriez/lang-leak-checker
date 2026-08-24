@@ -71,6 +71,25 @@ it("still flags a wholly-English element that merely contains a loanword", () =>
   assert.equal(leaks[0].detected, "eng");
 });
 
+it("passes officially adopted Danish loanwords via the dictionary (computer)", () => {
+  const leaks = detectLeaks(
+    [{ elementPath: "span", text: "computer" }],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 0);
+});
+
+it("dictionary words inside real English copy do NOT rescue it (Welcome to our site)", () => {
+  const leaks = detectLeaks(
+    [{ elementPath: "h1", text: "Welcome to our site, find the best deals here" }],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 1);
+  assert.equal(leaks[0].detected, "eng");
+});
+
 it("does NOT flag short/ambiguous single-word elements", () => {
   const leaks = detectLeaks(
     [

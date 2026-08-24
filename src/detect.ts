@@ -1,4 +1,5 @@
 import { LanguageDetectorBuilder } from "../wasm/lingua_wasm.cjs";
+import { isDanishDictionaryWord } from "./danish-dict.js";
 import { LOANWORDS, alphaTokens, stripTokens } from "./loanwords.js";
 import type { TextNode } from "./scan.js";
 
@@ -61,7 +62,7 @@ export function learnAdoptedWords(
     if (tokens.length < 2) continue; // lone words can't teach us ("Leaderboard" vs "Upload")
 
     for (const token of tokens) {
-      const rest = bestOf(stripTokens(node.text, new Set([token])));
+      const rest = bestOf(stripTokens(node.text, (p) => p.toLowerCase() === token));
       // Adopt only when the rest's BEST language is the target. An empty rest
       // or a Danish-leaning rest (like "kvittering" at 0.57) means the word is
       // carrying the foreign read alone. A foreign-leaning rest at any
@@ -95,6 +96,16 @@ export function detectLeaks(
   const set =
     allowlist ??
     new Set([...LOANWORDS, ...learnAdoptedWords(nodes, targetLang, opts.minLength)]);
+
+  // A word is allowed if it is an official Danish dictionary word OR it is in
+  // the learned/seed list. This makes the Danish hunspell dictionary the
+  // primary source of truth — officially adopted loanwords pass even when
+  // lingua confidently reads them as English.
+  const allowed = (part: string) => {
+    if (!/^[a-zæøå]+$/i.test(part)) return false; // skip whitespace/punct
+    return isDanishDictionaryWord(part) || set.has(part.toLowerCase());
+  };
+
   const leaks: Leak[] = [];
 
   for (const node of nodes) {
@@ -107,11 +118,12 @@ export function detectLeaks(
     if (best.value < CONFIDENCE_THRESHOLD) continue; // slang/ambiguous → skip
     if (best.language === targetLang) continue;      // confident target → clean
 
-    // Loanword/brand pass: if the foreign read comes only from allowlisted
-    // words, re-detect the remainder. It passes only when the remainder's
-    // BEST language is the target (or the remainder is empty) — a remainder
-    // that leans any amount toward foreign is still real foreign text.
-    const stripped = stripTokens(node.text, set);
+    // Loanword/brand pass: if the foreign read comes only from allowed words
+    // (official dictionary words + learned/seed), re-detect the remainder.
+    // It passes only when the remainder's BEST language is the target (or the
+    // remainder is empty) — a remainder that leans any amount toward foreign
+    // is still real foreign text.
+    const stripped = stripTokens(node.text, allowed);
     if (stripped !== node.text) {
       const clean = bestOf(stripped);
       if (!clean || clean.language === targetLang) {
