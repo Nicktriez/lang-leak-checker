@@ -13,8 +13,22 @@
   "license": "ISC",
   "author": "NickTriez",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "dist/cli.js",
   "scripts": {
-    "test": "npm pkg set scripts.test=\"node --test --import tsx test/\""
+    "test": "node --test --import tsx test/",
+    "dev": "tsx src/cli.ts",
+    "build": "tsc"
+  },
+  "bin": {
+    "lang-leak-checker": "dist/cli.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
   }
 }
