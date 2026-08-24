@@ -15,7 +15,7 @@
   "type": "module",
   "main": "dist/cli.js",
   "scripts": {
-    "test": "node --test --import tsx test/",
+    "test": "node --test --import tsx \"test/**/*.test.ts\"",
     "dev": "tsx src/cli.ts",
     "build": "tsc"
   },
