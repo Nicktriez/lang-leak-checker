@@ -2,6 +2,8 @@
 import { Command } from "commander";
 import { loadHtml } from "./fetch.js";
 import { scanPage } from "./scan.js";
+import { detectLeaks } from "./detect.js";
+import { printTty, printJson, type PageReport } from "./report.js";
 
 interface CliOptions {
   language: string;
@@ -37,19 +39,29 @@ function getOptions(): CliOptions {
   };
 }
 
-const options = getOptions();
-console.log("language:", options.language);
-console.log("inputs:", options.inputs);
-
 async function main() {
   const options = getOptions();
+  const results: PageReport[] = [];
+
   for (const input of options.inputs) {
     const html = await loadHtml(input);
-    console.log(`loaded ${html.length} bytes from ${input}`);
-
-    const nodes = scanPage(html, { includeHidden: false, includeMeta: false });
-    console.log(nodes.slice(0, 5));
+    const nodes = scanPage(html, {
+      includeHidden: options.includeHidden,
+      includeMeta: options.includeMeta,
+    });
+    const leaks = detectLeaks(nodes, options.language, { minLength: options.minLength });
+    results.push({ source: input, leaks });
   }
+
+  if (options.json) {
+    printJson(results);
+  } else {
+    printTty(results);
+  }
+  process.exit(results.reduce((n, r) => n + r.leaks.length, 0) > 0 ? 1 : 0);
 }
 
-main();
+main().catch((err) => {
+  console.error(`error: ${err}`);
+  process.exit(2);
+});

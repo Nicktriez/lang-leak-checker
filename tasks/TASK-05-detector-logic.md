@@ -99,7 +99,7 @@ console.log("leaks:", leaks);
 Run against a page with a known English string and confirm the `Leak` objects appear.
 
 ## Check you understand
-- [ ] I can explain what the `Leak` interface captures and why each field matters.
-- [ ] I can walk through the four-line filter and say which guard does what.
-- [ ] I can explain `continue` and why only confident wrong-language text becomes a leak.
-- [ ] I can explain the difference between `interface` and `type`.
+- [x] I can explain what the `Leak` interface captures and why each field matters.
+- [x] I can walk through the four-line filter and say which guard does what.
+- [x] I can explain `continue` and why only confident wrong-language text becomes a leak.
+- [x] I can explain the difference between `interface` and `type`.

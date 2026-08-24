@@ -1,2 +1,4 @@
 node_modules/
 dist/
+lingua-wasm/target/
+lingua-wasm/pkg/
