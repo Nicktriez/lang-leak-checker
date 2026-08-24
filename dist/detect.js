@@ -1,4 +1,5 @@
 import { LanguageDetectorBuilder } from "../wasm/lingua_wasm.cjs";
+import { stripLoanwords } from "./loanwords.js";
 const detector = LanguageDetectorBuilder
     .fromLanguages("Danish", "English")
     .withLowAccuracyMode() // plenty for da/en, faster
@@ -19,6 +20,16 @@ export function detectLeaks(nodes, target, opts) {
             continue; // slang/ambiguous → skip
         if (best.language === targetLang)
             continue; // confident target → clean
+        // Loanword/brand pass: if the foreign read comes only from allowlisted
+        // words, re-detect the remainder. It passes unless the remainder
+        // confidently reads as a foreign language.
+        const stripped = stripLoanwords(node.text);
+        if (stripped !== node.text) {
+            const clean = detector.computeLanguageConfidenceValues(stripped)[0];
+            if (!clean || clean.value < CONFIDENCE_THRESHOLD || clean.language === targetLang) {
+                continue;
+            }
+        }
         leaks.push({
             elementPath: node.elementPath,
             text: node.text,

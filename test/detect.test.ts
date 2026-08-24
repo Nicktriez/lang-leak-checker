@@ -25,6 +25,25 @@ it("does NOT flag Danish text with an English loanword", () => {
   assert.equal(leaks.length, 0);
 });
 
+it("does NOT flag an element that reads English only because of a loanword (Upload kvittering)", () => {
+  const leaks = detectLeaks(
+    [{ elementPath: "a.nav", text: "Upload kvittering" }],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 0);
+});
+
+it("still flags a wholly-English element that merely contains a loanword", () => {
+  const leaks = detectLeaks(
+    [{ elementPath: "p", text: "Points for uploading receipts and for crowd price reports that reach a trust tier." }],
+    "da",
+    { minLength: 3 }
+  );
+  assert.equal(leaks.length, 1);
+  assert.equal(leaks[0].detected, "eng");
+});
+
 it("does NOT flag short/ambiguous single-word elements", () => {
   const leaks = detectLeaks(
     [
