@@ -26,6 +26,7 @@
     "cheerio": "^1.2.0",
     "commander": "^15.0.0",
     "dictionary-da": "^6.0.0",
+    "dictionary-pl": "^2.0.0",
     "nspell": "^2.1.5"
   },
   "devDependencies": {

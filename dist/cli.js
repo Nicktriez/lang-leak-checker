@@ -2,7 +2,8 @@
 import { Command } from "commander";
 import { loadHtml } from "./fetch.js";
 import { scanPage } from "./scan.js";
-import { detectLeaks, learnAdoptedWords, targetLanguageName } from "./detect.js";
+import { detectLeaks, learnAdoptedWords } from "./detect.js";
+import { resolveLanguages } from "./languages.js";
 import { printTty, printJson } from "./report.js";
 const program = new Command()
     .name("lang-leak-checker")
@@ -28,6 +29,8 @@ function getOptions() {
 }
 async function main() {
     const options = getOptions();
+    // Fail fast on an unknown/unsupported language before any network work.
+    resolveLanguages(options.language);
     // Load + scan every page first so loanword learning sees the whole site
     // and the allowlist is consistent across pages.
     const pages = [];
@@ -40,7 +43,7 @@ async function main() {
         pages.push({ source: input, nodes });
     }
     const allNodes = pages.flatMap((p) => p.nodes);
-    const allowlist = learnAdoptedWords(allNodes, targetLanguageName(options.language), options.minLength);
+    const allowlist = learnAdoptedWords(allNodes, options.language, options.minLength);
     const results = [];
     for (const page of pages) {
         const leaks = detectLeaks(page.nodes, options.language, {

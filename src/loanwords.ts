@@ -33,9 +33,9 @@ export const LOANWORDS = new Set([
   "community",
 ]);
 
-/** Unique alphabetic tokens of `text`, lowercased (handles æøå). */
+/** Unique alphabetic tokens of `text`, lowercased (any script). */
 export function alphaTokens(text: string): string[] {
-  return Array.from(new Set(text.toLowerCase().match(/[a-zæøå]+/g) ?? []));
+  return Array.from(new Set(text.toLowerCase().match(/\p{L}+/gu) ?? []));
 }
 
 /**
