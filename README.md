@@ -15,7 +15,7 @@ the wrong language is flagged.
 
 ## Install with pnpm
 
-As a **devDependency** from the git URL (the JS equivalent of a Rails `gem 'x', git: …`):
+As a **devDependency** from the git URL:
 
 ```bash
 pnpm add -D lang-leak-checker@github:Nicktriez/lang-leak-checker#main
