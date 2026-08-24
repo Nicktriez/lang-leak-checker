@@ -146,6 +146,10 @@ are never hidden by the dictionary or the learning.
 
 ## Development (this repo)
 
+This repo is **npm-managed** (`package-lock.json`); use npm here. (Consumers install it from git with pnpm —
+see “Install with pnpm”. If you prefer pnpm in this repo: `rm -rf node_modules package-lock.json`,
+then `pnpm install` — `pnpm.onlyBuiltDependencies` in package.json approves esbuild for pnpm.)
+
 ```bash
 npm run dev     # tsx, instant feedback
 npm run build   # tsc → dist/
