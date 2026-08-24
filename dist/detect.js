@@ -50,6 +50,7 @@ function bestOf(detector, text) {
 export function learnAdoptedWords(nodes, targetIso, minLength) {
     const { target, other } = resolveLanguages(targetIso);
     const detector = getDetector(target.lingua, other.lingua);
+    const dictionary = getDictionary(targetIso);
     const votes = new Map(); // +1 adopt, -1 keep
     for (const node of nodes) {
         if (node.text.length < minLength)
@@ -61,6 +62,9 @@ export function learnAdoptedWords(nodes, targetIso, minLength) {
         if (tokens.length < 2)
             continue; // lone words can't teach us
         for (const token of tokens) {
+            // Already official (dictionary) or seeded — no vote needed.
+            if ((dictionary !== null && dictionary(token)) || LOANWORDS.has(token))
+                continue;
             const rest = bestOf(detector, stripTokens(node.text, (p) => p.toLowerCase() === token));
             // Adopt only when the rest's BEST language is the target. An empty rest
             // or a target-leaning rest means the word is carrying the foreign read

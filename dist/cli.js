@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { createRequire } from "node:module";
 import { loadHtml } from "./fetch.js";
 import { scanPage } from "./scan.js";
 import { detectLeaks, learnAdoptedWords } from "./detect.js";
-import { resolveLanguages } from "./languages.js";
+import { resolveLanguages, SUPPORTED_CODES } from "./languages.js";
 import { printTty, printJson } from "./report.js";
+const { version } = createRequire(import.meta.url)("../package.json");
 const program = new Command()
     .name("lang-leak-checker")
     .description("Find inner HTML that is not in the chosen language")
-    .version("0.1.0")
-    .requiredOption("-l, --language <code>", "target language ISO 639-1 code")
+    .version(version)
+    .requiredOption("-l, --language <code>", `target language ISO 639-1 code (${SUPPORTED_CODES})`)
     .option("-m, --min-length <n>", "skip text shorter than this", "3")
     .option("--include-meta", "include title/meta in the scan", false)
     .option("--include-hidden", "include script/style/svg text", false)

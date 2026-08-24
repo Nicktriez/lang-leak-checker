@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { createRequire } from "node:module";
 import { loadHtml } from "./fetch.js";
-import { scanPage } from "./scan.js";
+import { scanPage, type TextNode } from "./scan.js";
 import { detectLeaks, learnAdoptedWords } from "./detect.js";
-import { resolveLanguages } from "./languages.js";
+import { resolveLanguages, SUPPORTED_CODES } from "./languages.js";
 import { printTty, printJson, type PageReport } from "./report.js";
+
+const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 interface CliOptions {
   language: string;
@@ -18,8 +21,8 @@ interface CliOptions {
 const program = new Command()
   .name("lang-leak-checker")
   .description("Find inner HTML that is not in the chosen language")
-  .version("0.1.0")
-  .requiredOption("-l, --language <code>", "target language ISO 639-1 code")
+  .version(version)
+  .requiredOption("-l, --language <code>", `target language ISO 639-1 code (${SUPPORTED_CODES})`)
   .option("-m, --min-length <n>", "skip text shorter than this", "3")
   .option("--include-meta", "include title/meta in the scan", false)
   .option("--include-hidden", "include script/style/svg text", false)
@@ -48,7 +51,7 @@ async function main() {
 
   // Load + scan every page first so loanword learning sees the whole site
   // and the allowlist is consistent across pages.
-  const pages: { source: string; nodes: import("./scan.js").TextNode[] }[] = [];
+  const pages: { source: string; nodes: TextNode[] }[] = [];
   for (const input of options.inputs) {
     const html = await loadHtml(input);
     const nodes = scanPage(html, {

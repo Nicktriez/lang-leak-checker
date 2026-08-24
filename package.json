@@ -1,7 +1,7 @@
 {
   "name": "lang-leak-checker",
-  "version": "0.1.0",
-  "description": " TypeScript terminal tool that scans HTML and flags every inner HTML element that is not in the user's chosen language — catching untranslated/English \"language leakages\" on a site in one pass. It is element-level, not word-level: slang, loanwords, and brand names inside an otherwise-Danish element pass by design (Nick's explicit requirement). Only an element that confidently reads as the wrong language is flagged.",
+  "version": "1.0.0",
+  "description": "Element-level language-leak checker: scans HTML and flags every element that confidently reads as the wrong language. Official hunspell dictionaries + per-site loanword learning; multi-language (lingua wasm).",
   "homepage": "https://github.com/Nicktriez/lang-leak-checker#readme",
   "bugs": {
     "url": "https://github.com/Nicktriez/lang-leak-checker/issues"
@@ -13,6 +13,9 @@
   "license": "MIT",
   "author": "Nicklas N. Jensen",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/cli.js",
   "scripts": {
     "test": "node --test --import tsx \"test/**/*.test.ts\"",
@@ -27,6 +30,7 @@
     "commander": "^15.0.0",
     "dictionary-da": "^6.0.0",
     "dictionary-pl": "^2.0.0",
+    "domhandler": "^6.0.1",
     "nspell": "^2.1.5"
   },
   "devDependencies": {

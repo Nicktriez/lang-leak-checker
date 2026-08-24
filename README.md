@@ -121,6 +121,10 @@ cd lingua-wasm && ./build.sh polish german french
 The detector always compares the target language against **English** (the usual leak source); when the
 target *is* English it compares against Danish.
 
+> Why a custom wasm build and not the `lingua-node` npm package? `lingua-node` doesn't bundle the
+> language models, and compiling all 75 models is ≈288 MB. Building our own artifact with a curated set
+> keeps the shipped package ≈17 MB while still giving full accuracy for those languages.
+
 ---
 
 ## How loanwords are handled

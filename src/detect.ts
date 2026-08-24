@@ -7,7 +7,7 @@ import type { TextNode } from "./scan.js";
 export interface Leak {
   elementPath: string;
   text: string;
-  detected: string; // "eng" or "dan" (target vs other, 3-letter codes)
+  detected: string; // lingua language name, e.g. "English", "Polish"
   confidence: number;
 }
 
@@ -73,6 +73,7 @@ export function learnAdoptedWords(
 ): Set<string> {
   const { target, other } = resolveLanguages(targetIso);
   const detector = getDetector(target.lingua, other.lingua);
+  const dictionary = getDictionary(targetIso);
   const votes = new Map<string, number>(); // +1 adopt, -1 keep
 
   for (const node of nodes) {
@@ -85,6 +86,8 @@ export function learnAdoptedWords(
     if (tokens.length < 2) continue; // lone words can't teach us
 
     for (const token of tokens) {
+      // Already official (dictionary) or seeded — no vote needed.
+      if ((dictionary !== null && dictionary(token)) || LOANWORDS.has(token)) continue;
       const rest = bestOf(
         detector,
         stripTokens(node.text, (p) => p.toLowerCase() === token)

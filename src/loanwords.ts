@@ -4,9 +4,10 @@
  * Deciding which English-looking words are "accepted vocabulary" is done in
  * THREE layers, most-authoritative first:
  *
- * 1. DICTIONARY (see danish-dict.ts) — the official Danish hunspell word list.
- *    Anything in it IS Danish, adopted loanwords included ("computer",
- *    "weekend", "upload"). This is the primary source of truth.
+ * 1. DICTIONARY (see language-dict.ts) — the official hunspell word list of
+ *    the target language (same family as Firefox language packs). Anything in
+ *    it IS the language, adopted loanwords included ("computer", "weekend",
+ *    "upload" in Danish; "komputer" in Polish). Primary source of truth.
  *
  * 2. LEARNING (see detect.ts `learnAdoptedWords`) — during every scan, the
  *    detector watches foreign-reading elements and auto-adopts any word whose
