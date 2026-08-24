@@ -18,3 +18,20 @@ it("skips script content and captures visible text from the fixture", async () =
   // single brand words are captured as elements
   assert.ok(texts.some((t) => t.includes("Netto")));
 });
+
+it("excludes elements matching --exclude selectors (data regions)", async () => {
+  const html = await readFile(
+    new URL("./fixtures/mixed.html", import.meta.url),
+    "utf-8"
+  );
+  const nodes = scanPage(html, {
+    includeHidden: false,
+    includeMeta: false,
+    excludeSelectors: ["p.leak"],
+  });
+  const texts = nodes.map((n) => n.text);
+  // the English paragraph lives in p.leak — excluded
+  assert.ok(!texts.some((t) => t.includes("Your order has been submitted successfully")));
+  // everything else still captured
+  assert.ok(texts.some((t) => t.includes("Netto")));
+});

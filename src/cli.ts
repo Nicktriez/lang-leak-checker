@@ -5,6 +5,8 @@ import { loadHtml } from "./fetch.js";
 import { scanPage, type TextNode } from "./scan.js";
 import { detectLeaks, learnAdoptedWords } from "./detect.js";
 import { resolveLanguages, SUPPORTED_CODES } from "./languages.js";
+import { crawlSite } from "./crawl.js";
+import { login } from "./login.js";
 import { printTty, printJson, type PageReport } from "./report.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -15,7 +17,16 @@ interface CliOptions {
   includeMeta: boolean;
   includeHidden: boolean;
   json: boolean;
+  crawl: boolean;
+  auth?: string;
+  maxPages: number;
+  exclude: string[];
   inputs: string[];
+}
+
+function collect(value: string, prev: string[]): string[] {
+  prev.push(value);
+  return prev;
 }
 
 const program = new Command()
@@ -27,7 +38,32 @@ const program = new Command()
   .option("--include-meta", "include title/meta in the scan", false)
   .option("--include-hidden", "include script/style/svg text", false)
   .option("--json", "machine-readable output", false)
-  .argument("<inputs...>", "file path(s) or URL(s)");
+  .option("--crawl", "crawl the site from the given URL(s) with a headless browser", false)
+  .option("--auth <file>", "storage-state file from `login` (reuses your session; implies --crawl)")
+  .option("--max-pages <n>", "max pages when crawling", "50")
+  .option("--exclude <selector>", "skip elements matching this CSS selector, e.g. data regions (repeatable)", collect, [])
+  .argument("<inputs...>", "file path(s) or URL(s)")
+  .action(async () => {
+    try {
+      await main();
+    } catch (err) {
+      console.error(`error: ${err}`);
+      process.exit(2);
+    }
+  });
+
+program
+  .command("login <url>")
+  .description("open a browser, log in manually, and save the session for --auth")
+  .option("--save <path>", "where to save the storage state", "auth.json")
+  .action(async (url: string, opts: { save: string }) => {
+    try {
+      await login(url, opts.save);
+    } catch (err) {
+      console.error(`error: ${err}`);
+      process.exit(2);
+    }
+  });
 
 program.parse(process.argv);
 
@@ -39,6 +75,10 @@ function getOptions(): CliOptions {
     includeMeta: opts.includeMeta,
     includeHidden: opts.includeHidden,
     json: opts.json,
+    crawl: opts.crawl,
+    auth: opts.auth,
+    maxPages: Number(opts.maxPages),
+    exclude: opts.exclude,
     inputs: program.args,
   };
 }
@@ -49,16 +89,38 @@ async function main() {
   // Fail fast on an unknown/unsupported language before any network work.
   resolveLanguages(options.language);
 
+  // --auth needs the browser, so it implies --crawl.
+  const crawl = options.crawl || options.auth !== undefined;
+
   // Load + scan every page first so loanword learning sees the whole site
   // and the allowlist is consistent across pages.
-  const pages: { source: string; nodes: TextNode[] }[] = [];
-  for (const input of options.inputs) {
-    const html = await loadHtml(input);
-    const nodes = scanPage(html, {
-      includeHidden: options.includeHidden,
-      includeMeta: options.includeMeta,
+  let pages: { source: string; nodes: TextNode[] }[];
+  if (crawl) {
+    const crawled = await crawlSite(options.inputs, {
+      maxPages: options.maxPages,
+      authPath: options.auth,
     });
-    pages.push({ source: input, nodes });
+    pages = crawled.map((p) => ({
+      source: p.source,
+      nodes: scanPage(p.html, {
+        includeHidden: options.includeHidden,
+        includeMeta: options.includeMeta,
+        excludeSelectors: options.exclude,
+      }),
+    }));
+  } else {
+    pages = [];
+    for (const input of options.inputs) {
+      const html = await loadHtml(input);
+      pages.push({
+        source: input,
+        nodes: scanPage(html, {
+          includeHidden: options.includeHidden,
+          includeMeta: options.includeMeta,
+          excludeSelectors: options.exclude,
+        }),
+      });
+    }
   }
 
   const allNodes = pages.flatMap((p) => p.nodes);
@@ -79,8 +141,3 @@ async function main() {
   }
   process.exit(results.reduce((n, r) => n + r.leaks.length, 0) > 0 ? 1 : 0);
 }
-
-main().catch((err) => {
-  console.error(`error: ${err}`);
-  process.exit(2);
-});

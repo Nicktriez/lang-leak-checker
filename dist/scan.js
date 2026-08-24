@@ -17,6 +17,9 @@ export function scanPage(raw, opts) {
             return;
         if (!opts.includeMeta && HEAD_TEXT_TAGS.has(tag))
             return;
+        // Exclude the element and its whole subtree (closest matches self or an ancestor).
+        if (opts.excludeSelectors?.some((sel) => $(el).closest(sel).length > 0))
+            return;
         const text = elementText(el);
         if (!text)
             return;

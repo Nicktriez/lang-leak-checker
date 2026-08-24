@@ -13,7 +13,7 @@ const HEAD_TEXT_TAGS = new Set(["title", "meta"]);
 
 export function scanPage(
   raw: string,
-  opts: { includeHidden: boolean; includeMeta: boolean }
+  opts: { includeHidden: boolean; includeMeta: boolean; excludeSelectors?: string[] }
 ): TextNode[] {
   const $ = load(raw);
   const out: TextNode[] = [];
@@ -26,6 +26,8 @@ export function scanPage(
 
     if (!opts.includeHidden && HIDDEN_TAGS.has(tag)) return;
     if (!opts.includeMeta && HEAD_TEXT_TAGS.has(tag)) return;
+    // Exclude the element and its whole subtree (closest matches self or an ancestor).
+    if (opts.excludeSelectors?.some((sel) => $(el).closest(sel).length > 0)) return;
 
     const text = elementText(el);
     if (!text) return;

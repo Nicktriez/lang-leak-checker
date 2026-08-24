@@ -31,7 +31,8 @@
     "dictionary-da": "^6.0.0",
     "dictionary-pl": "^2.0.0",
     "domhandler": "^6.0.1",
-    "nspell": "^2.1.5"
+    "nspell": "^2.1.5",
+    "playwright": "^1.62.1"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
@@ -43,6 +44,8 @@
     "wasm"
   ],
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

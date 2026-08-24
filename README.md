@@ -54,6 +54,47 @@ pnpm exec lang-leak-checker --language da --json https://beta.skujeg.dk/
 | `--include-meta` | Also scan `<title>`/`<meta>` | off |
 | `--include-hidden` | Also scan `script`/`style`/`svg` | off |
 | `--json` | Machine-readable output | off |
+| `--crawl` | Crawl the site from the given URL(s) with a headless browser | off |
+| `--auth <file>` | Reuse a saved session (from `login`) — implies `--crawl` | — |
+| `--max-pages <n>` | Max pages when crawling | `50` |
+| `--exclude <selector>` | Skip elements matching this CSS selector, subtree included (repeatable) | — |
+
+## Crawling a whole site
+
+`--crawl` renders the start URL in headless Chromium and follows every same-origin link (up to
+`--max-pages`, default 50) — no hand-listed routes needed, and client-side rendered content is
+scanned too (plain `fetch` never sees it).
+
+```bash
+pnpm exec playwright install chromium   # once per machine (downloads the browser)
+pnpm exec lang-leak-checker --language da --crawl http://localhost:3000/
+```
+
+### Authenticated pages
+
+Log in **once** in a real browser window — the session (cookies/localStorage) is saved to a file
+and reused by scans. Works with any auth flow (passkeys, magic links, OAuth) because you complete
+the login manually; the tool never sees credentials.
+
+```bash
+pnpm exec lang-leak-checker login http://localhost:3000/login --save auth.json
+pnpm exec lang-leak-checker --language da --auth auth.json --crawl http://localhost:3000/
+```
+
+> `auth.json` contains session cookies — treat it like a password: keep it local, add it to
+> `.gitignore`.
+
+### Excluding data regions
+
+Product names, store names, and other data from a feed are not UI copy. Exclude the DOM regions
+that hold them so the report stays about copy:
+
+```bash
+pnpm exec lang-leak-checker --language da --crawl https://example.com/ \
+  --exclude "li.product-card" --exclude "#offer-grid"
+```
+
+Exclusion covers the matching element **and its entire subtree**.
 
 ### Exit codes (the whole CI/agent contract)
 
