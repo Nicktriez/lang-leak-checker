@@ -38,6 +38,13 @@ dictionaries in automatically.
 # One-off scan (pnpm)
 pnpm exec lang-leak-checker --language da https://beta.skujeg.dk/
 
+# Whole site: crawl every same-origin page with a headless browser
+pnpm exec lang-leak-checker --language da --crawl https://beta.skujeg.dk/
+
+# Pages behind login: save your session once, then reuse it
+pnpm exec lang-leak-checker login https://beta.skujeg.dk/login --save auth.json
+pnpm exec lang-leak-checker --language da --auth auth.json --crawl https://beta.skujeg.dk/
+
 # Multiple inputs (files and/or URLs)
 pnpm exec lang-leak-checker --language da page1.html https://beta.skujeg.dk/leaderboard
 
@@ -108,11 +115,11 @@ Exclusion covers the matching element **and its entire subtree**.
 
 ## As a project script (pnpm)
 
-Add to `package.json`:
+Add to `package.json` (`--crawl` makes it scan the whole site by default):
 
 ```json
 "scripts": {
-  "leak-check": "lang-leak-checker --language da $URL"
+  "leak-check": "lang-leak-checker --language da --crawl $URL"
 }
 ```
 
@@ -124,6 +131,9 @@ pnpm run leak-check --language da --json https://beta.skujeg.dk/
 
 # ✅ plain URL also works (commander treats "--" as end-of-options)
 pnpm run leak-check -- https://beta.skujeg.dk/
+
+# ✅ scan a local dev server instead
+pnpm run leak-check http://localhost:3000/
 ```
 
 > ⚠️ **pnpm forwards `--` literally.** `pnpm run leak-check -- --language da …` puts `--language`
