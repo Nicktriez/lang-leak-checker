@@ -65,6 +65,7 @@ pnpm exec lang-leak-checker --language da --json https://beta.skujeg.dk/
 | `--auth <file>` | Reuse a saved session (from `login`) — implies `--crawl` | — |
 | `--max-pages <n>` | Max pages when crawling | `50` |
 | `--exclude <selector>` | Skip elements matching this CSS selector, subtree included (repeatable) | — |
+| `--exclude-url <pattern>` | Skip crawled pages whose URL contains this substring (repeatable) | — |
 
 ## Crawling a whole site
 
@@ -76,6 +77,16 @@ scanned too (plain `fetch` never sees it).
 pnpm exec playwright install chromium   # once per machine (downloads the browser)
 pnpm exec lang-leak-checker --language da --crawl http://localhost:3000/
 ```
+
+> ⚠️ **Scan a production build, not the dev server.** Dev servers inject tooling UI into every
+> page (Vite/SolidStart error overlays, "View Errors", HMR panels). It's part of the rendered DOM,
+> so the crawler flags it on *every* page. Build and serve instead:
+>
+> ```bash
+> pnpm run build && pnpm run start     # then scan http://localhost:3000/
+> ```
+>
+> The overlay doesn't exist in production builds, so those flags disappear.
 
 ### Authenticated pages
 
@@ -102,6 +113,17 @@ pnpm exec lang-leak-checker --language da --crawl https://example.com/ \
 ```
 
 Exclusion covers the matching element **and its entire subtree**.
+
+When a whole route family is data (`/products/<id>` detail pages, for example), skip those pages
+during the crawl instead of excluding their markup page by page:
+
+```bash
+pnpm exec lang-leak-checker --language da --crawl https://example.com/ --exclude-url "/products"
+```
+
+`--exclude-url` matches substrings of the crawled URL and is repeatable. Combine both: skip the
+data-heavy route families with `--exclude-url`, and trim remaining feed fragments inside kept pages
+with `--exclude`.
 
 ### Exit codes (the whole CI/agent contract)
 
