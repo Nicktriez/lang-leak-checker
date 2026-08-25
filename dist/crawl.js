@@ -32,6 +32,26 @@ export function urlMatchesPatterns(url, patterns) {
     return patterns.some((p) => url.includes(p));
 }
 /**
+ * page.content() throws while a page is mid-navigation (dev servers hydrate,
+ * redirect and re-render constantly). Wait for things to settle and retry;
+ * give up with null after a few tries so one page never kills the scan.
+ */
+async function safeContent(page, url) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+        try {
+            return await page.content();
+        }
+        catch {
+            await page
+                .waitForLoadState("domcontentloaded", { timeout: 10000 })
+                .catch(() => { });
+            await page.waitForTimeout(300 * (attempt + 1));
+        }
+    }
+    console.error(`warn: could not read ${url} (page kept navigating) — skipped`);
+    return null;
+}
+/**
  * Crawls same-origin pages starting at `startUrls` with a headless browser —
  * the page is rendered by real Chromium, so client-side JS content is scanned
  * too (plain `fetch` never sees it).
@@ -72,7 +92,9 @@ export async function crawlSite(startUrls, opts) {
                 console.error(`warn: HTTP ${resp.status()} at ${url} — skipped`);
                 continue;
             }
-            const html = await page.content();
+            const html = await safeContent(page, url);
+            if (html === null)
+                continue;
             pages.push({ source: url, html });
             for (const link of extractLinks(html, url)) {
                 if (!visited.has(link) && !queue.includes(link))

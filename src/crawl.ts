@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 
 export interface CrawlPage {
   source: string;
@@ -35,6 +35,26 @@ export function extractLinks(html: string, baseUrl: string): string[] {
 /** True if `url` contains any of the substrings (e.g. "/products"). */
 export function urlMatchesPatterns(url: string, patterns: readonly string[]): boolean {
   return patterns.some((p) => url.includes(p));
+}
+
+/**
+ * page.content() throws while a page is mid-navigation (dev servers hydrate,
+ * redirect and re-render constantly). Wait for things to settle and retry;
+ * give up with null after a few tries so one page never kills the scan.
+ */
+async function safeContent(page: Page, url: string): Promise<string | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      return await page.content();
+    } catch {
+      await page
+        .waitForLoadState("domcontentloaded", { timeout: 10000 })
+        .catch(() => {});
+      await page.waitForTimeout(300 * (attempt + 1));
+    }
+  }
+  console.error(`warn: could not read ${url} (page kept navigating) — skipped`);
+  return null;
 }
 
 /**
@@ -83,7 +103,8 @@ export async function crawlSite(
         continue;
       }
 
-      const html = await page.content();
+      const html = await safeContent(page, url);
+      if (html === null) continue;
       pages.push({ source: url, html });
 
       for (const link of extractLinks(html, url)) {
