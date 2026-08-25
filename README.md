@@ -86,6 +86,9 @@ pnpm exec lang-leak-checker --language da --crawl http://localhost:3000/
 > pnpm run build && pnpm run start     # then scan http://localhost:3000/
 > ```
 >
+> Vite+ projects (`vp`): `vp build && vp preview` — this serves the production build on
+> `http://localhost:4173/`; scan that URL instead.
+>
 > The overlay doesn't exist in production builds, so those flags disappear.
 
 ### Authenticated pages
