@@ -27,6 +27,10 @@ export function extractLinks(html, baseUrl) {
     });
     return [...links];
 }
+/** True if `url` contains any of the substrings (e.g. "/products"). */
+export function urlMatchesPatterns(url, patterns) {
+    return patterns.some((p) => url.includes(p));
+}
 /**
  * Crawls same-origin pages starting at `startUrls` with a headless browser —
  * the page is rendered by real Chromium, so client-side JS content is scanned
@@ -53,6 +57,8 @@ export async function crawlSite(startUrls, opts) {
             const url = queue.shift();
             if (visited.has(url))
                 continue;
+            if (urlMatchesPatterns(url, opts.excludeUrlPatterns ?? []))
+                continue; // data-heavy route families
             visited.add(url);
             let resp;
             try {

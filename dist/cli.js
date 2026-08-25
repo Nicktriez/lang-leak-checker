@@ -26,6 +26,7 @@ const program = new Command()
     .option("--auth <file>", "storage-state file from `login` (reuses your session; implies --crawl)")
     .option("--max-pages <n>", "max pages when crawling", "50")
     .option("--exclude <selector>", "skip elements matching this CSS selector, e.g. data regions (repeatable)", collect, [])
+    .option("--exclude-url <pattern>", "skip crawled pages whose URL contains this substring, e.g. '/products' (repeatable)", collect, [])
     .argument("<inputs...>", "file path(s) or URL(s)")
     .action(async () => {
     try {
@@ -62,6 +63,7 @@ function getOptions() {
         auth: opts.auth,
         maxPages: Number(opts.maxPages),
         exclude: opts.exclude,
+        excludeUrl: opts.excludeUrl,
         inputs: program.args,
     };
 }
@@ -78,6 +80,7 @@ async function main() {
         const crawled = await crawlSite(options.inputs, {
             maxPages: options.maxPages,
             authPath: options.auth,
+            excludeUrlPatterns: options.excludeUrl,
         });
         pages = crawled.map((p) => ({
             source: p.source,

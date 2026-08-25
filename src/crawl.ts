@@ -32,6 +32,11 @@ export function extractLinks(html: string, baseUrl: string): string[] {
   return [...links];
 }
 
+/** True if `url` contains any of the substrings (e.g. "/products"). */
+export function urlMatchesPatterns(url: string, patterns: readonly string[]): boolean {
+  return patterns.some((p) => url.includes(p));
+}
+
 /**
  * Crawls same-origin pages starting at `startUrls` with a headless browser —
  * the page is rendered by real Chromium, so client-side JS content is scanned
@@ -43,7 +48,7 @@ export function extractLinks(html: string, baseUrl: string): string[] {
  */
 export async function crawlSite(
   startUrls: string[],
-  opts: { maxPages: number; authPath?: string }
+  opts: { maxPages: number; authPath?: string; excludeUrlPatterns?: readonly string[] }
 ): Promise<CrawlPage[]> {
   const browser = await chromium.launch();
   const context = await browser.newContext(
@@ -63,6 +68,7 @@ export async function crawlSite(
     while (queue.length > 0 && pages.length < opts.maxPages) {
       const url = queue.shift()!;
       if (visited.has(url)) continue;
+      if (urlMatchesPatterns(url, opts.excludeUrlPatterns ?? [])) continue; // data-heavy route families
       visited.add(url);
 
       let resp;
